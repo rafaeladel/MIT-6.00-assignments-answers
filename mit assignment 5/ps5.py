@@ -1,11 +1,13 @@
 # Problem Set 5: 6.00 Word Game
-# Name: 
-# Collaborators: 
-# Time: 
+# Name:
+# Collaborators:
+# Time:
 #
 
 import random
 import string
+import time
+import operator
 
 VOWELS = 'aeiou'
 CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
@@ -22,10 +24,11 @@ SCRABBLE_LETTER_VALUES = {
 
 WORDLIST_FILENAME = "words.txt"
 
+
 def load_words():
     """
     Returns a list of valid words. Words are strings of lowercase letters.
-    
+
     Depending on the size of the word list, this function may
     take a while to finish.
     """
@@ -39,6 +42,7 @@ def load_words():
     print "  ", len(wordlist), "words loaded."
     return wordlist
 
+
 def get_frequency_dict(sequence):
     """
     Returns a dictionary where the keys are elements of the sequence
@@ -51,7 +55,7 @@ def get_frequency_dict(sequence):
     # freqs: dictionary (element_type -> int)
     freq = {}
     for x in sequence:
-        freq[x] = freq.get(x,0) + 1
+        freq[x] = freq.get(x, 0) + 1
     return freq
 
 
@@ -61,7 +65,7 @@ def get_frequency_dict(sequence):
 #
 # Problem #1: Scoring a word
 #
-def get_word_score(word, n):
+def get_word_score(word, time, n):
     """
     Returns the score for a word. Assumes the word is a
     valid word.
@@ -76,20 +80,40 @@ def get_word_score(word, n):
     word: string (lowercase letters)
     returns: int >= 0
     """
-    # TO DO ...    
-    word = word.lower()
-    sum = 0
+    # TO DO ...
+    current_sum = 0
     global total_sum
     for letter in word:
-        sum += SCRABBLE_LETTER_VALUES[letter]
-    if len(word) >= n :
-        sum += 50
-    total_sum += sum
-    return sum
+        current_sum += SCRABBLE_LETTER_VALUES[letter]
+    if len(word) >= n:
+        current_sum += 50
+    current_sum = current_sum / time
+    total_sum += current_sum
+    return current_sum
 
-#
-# Make sure you understand how this function works and what it does!
-#
+
+def get_words_to_points(word_list):
+	points_dict = {}
+	for word in word_list:
+		word_sum = 0
+		for char in word:
+			word_sum += SCRABBLE_LETTER_VALUES[char]
+		points_dict[word] = word_sum
+	return points_dict
+
+
+def pick_best_word(hand, points_dict):
+	word_list = {}
+	for word in points_dict:
+		formed_word = ""
+		for char in hand:
+			if char in word:
+				formed_word += char			
+		if len(formed_word) == len(word) :
+			word_list[word] = points_dict[word]
+	return max(word_list.iteritems(), key = operator.itemgetter(1))[0]
+		
+		
 def display_hand(hand):
     """
     Displays the letters currently in the hand.
@@ -109,6 +133,8 @@ def display_hand(hand):
 #
 # Make sure you understand how this function works and what it does!
 #
+
+
 def deal_hand(n):
     """
     Returns a random hand containing n lowercase letters.
@@ -121,28 +147,30 @@ def deal_hand(n):
     n: int >= 0
     returns: dictionary (string -> int)
     """
-    hand={}
+    hand = {}
     num_vowels = n / 3
-    
+
     for i in range(num_vowels):
-        x = VOWELS[random.randrange(0,len(VOWELS))]
+        x = VOWELS[random.randrange(0, len(VOWELS))]
         hand[x] = hand.get(x, 0) + 1
-        
-    for i in range(num_vowels, n):    
-        x = CONSONANTS[random.randrange(0,len(CONSONANTS))]
+
+    for i in range(num_vowels, n):
+        x = CONSONANTS[random.randrange(0, len(CONSONANTS))]
         hand[x] = hand.get(x, 0) + 1
-        
+	
     return hand
 
 #
 # Problem #2: Update a hand by removing letters
 #
+
+
 def update_hand(hand, word):
     """
     Assumes that 'hand' has all the letters in word.
     In other words, this assumes that however many times
     a letter appears in 'word', 'hand' has at least as
-    many of that letter in it. 
+    many of that letter in it.
 
     Updates the hand: uses up the letters in the given word
     and returns the new hand, without those letters in it.
@@ -150,61 +178,95 @@ def update_hand(hand, word):
     Has no side effects: does not mutate hand.
 
     word: string
-    hand: dictionary (string -> int)    
+    hand: dictionary (string -> int)
     returns: dictionary (string -> int)
     """
     # TO DO ...
-    for c in word:        
+    for c in word:
         if hand[c] == 1:
             del hand[c]
-        elif hand[c] > 1 :            
+        elif hand[c] > 1:
             hand[c] -= 1
-        else : 
+        else:
             pass
     return hand
+    
+def check_hand(hand, points_dict):
+	"""
+	check whether if the current hand can form a word or not
+	"""
+	for word in points_dict:
+		char_word = ""		
+		for char in hand:
+			if char in word:				
+				char_word += char			
+		if len(char_word) == len(word):   # if the test word is the word from dict
+			return True					
+	return False		
 
 #
 # Problem #3: Test word validity
 #
-def is_valid_word(word, hand, word_list):
+
+
+def is_valid_word(word, hand, points_dict):
     """
     Returns True if word is in the word_list and is entirely
     composed of letters in the hand. Otherwise, returns False.
     Does not mutate hand or word_list.
-    
+
     word: string
     hand: dictionary (string -> int)
     word_list: list of lowercase strings
     """
     # TO DO ...
 
-    d_word = {}    
+    d_word = {}
     for c in word:
-        d_word[c] = d_word.get(c, 0) + 1   
-     
-    #print hand   for debugging 
+        d_word[c] = d_word.get(c, 0) + 1
+
+    #print hand   for debugging
     #print d_word  for debugging
-    
+
     for c in d_word:
-        if hand.get(c, 0) < d_word.get(c, 0):            
+        if hand.get(c, 0) < d_word.get(c, 0):
             return False
-        
-    if word not in word_list:
-        return False
-    else :
+
+    if word in points_dict:
         return True
-    
-    
+    else:
+        return False
+
+
+def get_word(hand, time_limit, points_dict):    
+    print "Current hand: ",
+    display_hand(hand)
+    old_time = time.time()
+    ##word = raw_input("Enter word, or a . to indicate that you are finished: ")
+    word = pick_best_word(hand, points_dict)
+    print "Computer said:" , word
+    new_time = time.time()
+    time_taken = new_time - old_time
+    time_limit = time_limit - time_taken if time_limit - time_taken > 0 else 0.0
+    print "It took %0.2f to provide an answer" % time_taken
+    if time_limit > 0.0:
+        print "You have %0.8f seconds left!" % time_limit
+        time_exceed = False
+    else:
+        time_exceed = True    
+    return word.lower(), time_taken, time_exceed
 
 #
 # Problem #4: Playing a hand
 #
-def play_hand(hand, word_list):
+
+
+def play_hand(hand, time_limit, points_dict):
     """
     Allows the user to play the given hand, as follows:
 
     * The hand is displayed.
-    
+
     * The user may input a word.
 
     * An invalid word is rejected, and a message is displayed asking
@@ -213,7 +275,7 @@ def play_hand(hand, word_list):
     * When a valid word is entered, it uses up letters from the hand.
 
     * After every valid word: the score for that word and the total
-      score so far are displayed, the remaining letters in the hand 
+      score so far are displayed, the remaining letters in the hand
       are displayed, and the user is asked to input another word.
 
     * The sum of the word scores is displayed when the hand finishes.
@@ -228,34 +290,40 @@ def play_hand(hand, word_list):
       word_list: list of lowercase strings
     """
     # TO DO ...
-    print "Current hand: ",
-    display_hand(hand)    
-    word = raw_input("Enter word, or a . to indicate that you are finished: ")
-    while len(hand) > 0 and word != ".":               
-        print
-        if is_valid_word(word, hand, word_list) == False :
-            print "---------------------"
-            print "Invalid word!"
-            print "---------------------"
-            print 
-            print "Current hand: ", 
-            display_hand(hand)            
-            word = raw_input("Enter word, or a . to indicate that you are finished: ")
-            continue
-        else :
-            print "*********************"
-            print word, " earned ", get_word_score(word, HAND_SIZE), " points. Total: ", total_sum, " points."            
-            print "*********************"
-            print 
-            print "Current hand: ", 
-            display_hand(update_hand(hand, word))            
-            word = raw_input("Enter word, or a . to indicate that you are finished: ")
+    word, time_taken, time_exceed = get_word(hand, time_limit, points_dict)
+    while len(hand) > 0 and word != ".":
+        if time_exceed is not True:
+            print
+            if is_valid_word(word, hand, points_dict) == False:
+                print "---------------------"
+                print "Invalid word!"
+                print "---------------------"
+                print
+                time_limit -= time_taken
+                word, time_taken, time_exceed = get_word(hand, time_limit, points_dict)
+                continue
+            else:
+                print "*********************"
+                print word, " earned ", get_word_score(word, time_taken, HAND_SIZE), " points. Total: ", total_sum, " points."
+                print "*********************"
+                print
+                time_limit -= time_taken
+                if check_hand(update_hand(hand, word), points_dict) == False:
+					print "No words can be formed with the current hand"
+					break
+                word, time_taken, time_exceed = get_word(hand, time_limit, points_dict)
+        else:
+            print "You have exceeded the time limit, your score is: ", total_sum
+            break
+            
     print "Total score: " , total_sum
 #
 # Problem #5: Playing a game
 # Make sure you understand how this code works!
-# 
-def play_game(word_list):
+#
+
+
+def play_game(points_dict):
     """
     Allow the user to play an arbitrary number of hands.
 
@@ -270,18 +338,21 @@ def play_game(word_list):
 
     * If the user inputs anything else, ask them again.
     """
-    # TO DO ...   
-    
+    # TO DO ...
+
     ## uncomment the following block of code once you've completed Problem #4
-    hand = deal_hand(HAND_SIZE) # random init
+    hand = deal_hand(HAND_SIZE)  # random init
     while True:
         cmd = raw_input('Enter n to deal a new hand, r to replay the last hand, or e to end game: ')
         if cmd == 'n':
             hand = deal_hand(HAND_SIZE)
-            play_hand(hand.copy(), word_list)
+            time_limit = float(raw_input("Enter time limit, in seconds: "))
+            play_hand(hand.copy(), time_limit, points_dict)
             print
         elif cmd == 'r':
-            play_hand(hand.copy(), word_list)
+            if 'time_limit' not in locals():
+                time_limit = float(raw_input("Enter time limit, in seconds: "))
+            play_hand(hand.copy(), time_limit, points_dict)
             print
         elif cmd == 'e':
             break
@@ -293,7 +364,5 @@ def play_game(word_list):
 #
 if __name__ == '__main__':
     word_list = load_words()
-    play_game(word_list)    
-    
-	
-
+    points_dict = get_words_to_points(word_list)
+    play_game(points_dict)
