@@ -58,18 +58,18 @@ def get_data(p, w):
     print p , "turn."
     print "Current fragement: ", w
     char = raw_input(p + " says: ").lower()
-    print 
+    print
     return char
 
 def get_score(p):
     global players
     players[p] += 1
-    print p, " wins this time!"    
+    print p, " wins this time!"
     for index in players:
         print index, " : ", players.get(index, 0)
 
 def end_game(word):
-    global wordlist    
+    global wordlist
     for test_word in wordlist:
         if word in test_word:
             if word == test_word and len(word) > 3:
@@ -80,7 +80,7 @@ def end_game(word):
 
 def play_ghost():
     global word
-    current_p, next_p = "Player 1", "Player 2"    
+    current_p, next_p = "Player 1", "Player 2"
     while True:
         char = get_data(current_p, word)
         while (char in string.ascii_letters) != True:
@@ -88,18 +88,19 @@ def play_ghost():
         word += char
         if end_game(word) :
             print "Fragement: ", word
-            get_score(next_p)                        
+            get_score(next_p)
             break
         current_p, next_p = next_p, current_p
+
 
 if __name__ == "__main__":
     wordlist = load_words()
     players = {"Player 1":0, "Player 2":0}
     word = ""
     print "Welcome to Ghost!"
-    play_ghost()        
+    play_ghost()
     while True:
-        play_again = raw_input("Do you want to play again ? (y/n): ").lower()        
+        play_again = raw_input("Do you want to play again ? (y/n): ").lower()
         if play_again == "y":
             word = ""
             play_ghost()
@@ -107,4 +108,4 @@ if __name__ == "__main__":
             break
         else :
             pass
-    
+
